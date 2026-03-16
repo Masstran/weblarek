@@ -48,11 +48,11 @@ buyer.setEmail('a@b.c')
 buyer.setPhone('+79991234567')
 buyer.setPayment('card')
 console.log('Покупатель: ', buyer.getBuyer());
-console.log('Валидация: ', buyer.validate());
+console.log('Валидация корректного покупателя: ', buyer.validate());
 
 buyer.clear();
 console.log('Покупатель после clear: ', buyer.getBuyer());
-console.log('Валидация: ', buyer.validate());
+console.log('Валидация некорректного покупателя: ', buyer.validate());
 
 // Let's test api
 
