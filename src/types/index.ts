@@ -29,3 +29,22 @@ export interface IBuyerValidationResult {
     email?: string,
     phone?: string
 }
+
+export interface IOrderRequest {
+    payment: TPayment,
+    address: string,
+    phone: string,
+    email: string,
+    total: number,
+    items: string[]
+}
+
+export interface IOrderResponse {
+    id: string,
+    total: number
+}
+
+export interface IProductResponse {
+    total: number,
+    items: IProduct[]
+}

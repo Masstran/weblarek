@@ -3,7 +3,10 @@ import {Catalog} from "./components/models/Catalog.ts";
 import {Cart} from "./components/models/Cart.ts";
 import {Buyer} from "./components/models/Buyer.ts";
 import {apiProducts} from "./utils/data.ts";
-import {IProduct} from "./types";
+import {IOrderResponse, IProduct} from "./types";
+import {Api} from "./components/base/Api.ts";
+import {API_URL} from "./utils/constants.ts";
+import {LarekApi} from "./components/communication/LarekApi.ts";
 
 const catalog = new Catalog();
 const cart = new Cart();
@@ -50,3 +53,27 @@ console.log('Валидация: ', buyer.validate());
 buyer.clear();
 console.log('Покупатель после clear: ', buyer.getBuyer());
 console.log('Валидация: ', buyer.validate());
+
+// Let's test api
+
+const api = new Api(API_URL);
+const larekApi = new LarekApi(api);
+
+const larekProducts: IProduct[] = await larekApi.getProducts();
+console.log('Продукты из API: ', larekProducts);
+
+cart.addProduct(larekProducts[0]);
+cart.addProduct(larekProducts[1]);
+console.log('Корзина: ', cart.getProducts())
+buyer.setAddress('abc')
+buyer.setEmail('a@b.c')
+buyer.setPhone('+79991234567')
+buyer.setPayment('card')
+console.log('Покупатель: ', buyer.getBuyer())
+const response: IOrderResponse = await larekApi.sendOrder({
+    ...buyer.getBuyer(),
+    total: cart.getTotalPrice(),
+    items: cart.getProducts().map(product => product.id)
+})
+
+console.log('Результат заказа: ', response)

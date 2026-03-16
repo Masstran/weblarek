@@ -186,3 +186,18 @@ Presenter - презентер содержит основную логику п
 `getBuyer(): IBuyer` - возвращает данные о покупателе
 `clear(): void` - очищает все данные
 `validate(): IBuyerValidationResult` - валидирует заполненные поля и возвращает найденные ошибки
+
+
+### Слой коммуникации 
+
+#### Класс LarekApi
+
+Конструктор:  
+`constructor(api: IApi)` - конструктор принимает класс api с подготовленным хостом и параметрами
+
+Поля класса:  
+`_api: IApi` - внутренний объект для api запросов
+
+Методы:  
+`async getProducts(): Promise<IProduct[]>` - возвращает промис на список продуктов из API
+`async sendOrder(order: IOrderRequest): Promise<IOrderResponse>` - отправляет заказ в API и возвращает промис с результатом
