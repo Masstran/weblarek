@@ -20,13 +20,8 @@ export class Catalog {
         return this._chosenProduct;
     }
 
-    getProduct(productId: string): IProduct | null {
-        for (const product of this._products) {
-            if (product.id === productId) {
-                return product;
-            }
-        }
-        return null;
+    getProduct(productId: string): IProduct | undefined {
+        return this._products.find(item => item.id === productId);
     }
 
 }

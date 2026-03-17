@@ -24,8 +24,11 @@ console.log('Существующий продукт по id: ', catalog.getProd
 
 console.log('Несуществующий продукт по id: ', catalog.getProduct("Not-an-id"));
 
+cart.addProduct(products[0]);
+cart.addProduct(products[1]);
 
-cart.saveProducts(products);
+console.log('Количество товаров в корзине после добавления товара: ', cart.getProductAmount());
+
 console.log('Список товаров корзины: ', cart.getProducts());
 console.log('Общая стоимость товаров: ', cart.getTotalPrice());
 console.log('Количество товаров: ', cart.getProductAmount());
@@ -33,14 +36,11 @@ console.log('Количество товаров: ', cart.getProductAmount());
 console.log('Присутствие товара в корзине: ', cart.isPresent(products[0].id));
 console.log('Присутствие левого товара в корзине: ', cart.isPresent('Not-an-id'));
 
-cart.clear();
-console.log('Список товаров корзины после очистки: ', cart.getProducts());
-
-cart.addProduct(products[0]);
-console.log('Количество товаров в корзине после добавления товара: ', cart.getProductAmount());
-
 cart.removeProduct(products[0]);
 console.log('Количество товаров в корзине после удаления товара: ', cart.getProductAmount());
+
+cart.clear();
+console.log('Список товаров корзины после очистки: ', cart.getProducts());
 
 
 buyer.setAddress('abc')
@@ -58,22 +58,25 @@ console.log('Валидация некорректного покупателя:
 
 const api = new Api(API_URL);
 const larekApi = new LarekApi(api);
+try {
+    const larekProducts: IProduct[] = await larekApi.getProducts();
+    catalog.saveProducts(larekProducts);
+    console.log('Продукты из API: ', catalog.getProducts());
+    cart.addProduct(larekProducts[0]);
+    cart.addProduct(larekProducts[1]);
+    console.log('Корзина: ', cart.getProducts())
+    buyer.setAddress('abc')
+    buyer.setEmail('a@b.c')
+    buyer.setPhone('+79991234567')
+    buyer.setPayment('card')
+    console.log('Покупатель: ', buyer.getBuyer())
+    const response: IOrderResponse = await larekApi.sendOrder({
+        ...buyer.getBuyer(),
+        total: cart.getTotalPrice(),
+        items: cart.getProducts().map(product => product.id)
+    })
 
-const larekProducts: IProduct[] = await larekApi.getProducts();
-console.log('Продукты из API: ', larekProducts);
-
-cart.addProduct(larekProducts[0]);
-cart.addProduct(larekProducts[1]);
-console.log('Корзина: ', cart.getProducts())
-buyer.setAddress('abc')
-buyer.setEmail('a@b.c')
-buyer.setPhone('+79991234567')
-buyer.setPayment('card')
-console.log('Покупатель: ', buyer.getBuyer())
-const response: IOrderResponse = await larekApi.sendOrder({
-    ...buyer.getBuyer(),
-    total: cart.getTotalPrice(),
-    items: cart.getProducts().map(product => product.id)
-})
-
-console.log('Результат заказа: ', response)
+    console.log('Результат заказа: ', response)
+} catch (err) {
+    console.log(err);
+}

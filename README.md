@@ -148,7 +148,7 @@ Presenter - презентер содержит основную логику п
 `getProducts(): IProduct[]` - возвращает список товаров
 `saveChosenProduct(product: IProduct | null): void` - сохраняет выбранный товар   
 `getChosenProduct(): IProduct | null` - возвращает выбранный товар
-`getProduct(productId: string): IProduct | null` - возвращает товар по заданному id
+`getProduct(productId: string): IProduct | undefined` - возвращает товар по заданному id
 
 #### Класс Cart
 Класс отвечает за хранение и отображение товаров в корзине
@@ -160,7 +160,6 @@ Presenter - презентер содержит основную логику п
 `_products: IProduct[]` - список товаров в каталоге  
 
 Методы:  
-`saveProducts(products: IProduct[]): void` - обновляет список товаров
 `getProducts(): IProduct[]` - возвращает список товаров
 `addProduct(product: IProduct): void` - добавляет товар в корзину
 `removeProduct(product: IProduct): void` - удаляет товар из корзины

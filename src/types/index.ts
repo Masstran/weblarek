@@ -30,11 +30,7 @@ export interface IBuyerValidationResult {
     phone?: string
 }
 
-export interface IOrderRequest {
-    payment: TPayment,
-    address: string,
-    phone: string,
-    email: string,
+export interface IOrderRequest extends IBuyer{
     total: number,
     items: string[]
 }

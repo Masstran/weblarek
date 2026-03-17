@@ -34,17 +34,17 @@ export class Buyer {
     }
 
     validate(): IBuyerValidationResult {
-        let result: IBuyerValidationResult = {};
+        const result: IBuyerValidationResult = {};
         if (this._buyer.payment === '') {
             result.payment = "Пожалуйста, укажите метод оплаты"
         }
-        if (!this._buyer.phone.match(/\+7\d{10}/)) {
+        if (this._buyer.phone === '') {
             result.phone = "Пожалуйста, введите телефон в формате +79991234567"
         }
         if (this._buyer.address === '') {
             result.address = "Пожалуйста, укажите адрес доставки"
         }
-        if (!this._buyer.email.match(/\w+@\w+\.\w+/)) {
+        if (this._buyer.email === '') {
             result.email = "Пожалуйста, укажите корректный email"
         }
         return result;
