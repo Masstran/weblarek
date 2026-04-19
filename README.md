@@ -399,3 +399,7 @@ Presenter - презентер содержит основную логику п
 `contacts:email:input` - изменён инпут email
 `contacts:phone:input` - изменён инпут номера телефона
 `contacts:submit` - нажата кнопка отправки формы класса Contacts
+`buyer:updated` - модель покупателя была изменена
+`cart:updated` - модель корзины была изменена
+`catalog:updated` - модель каталога была изменена
+

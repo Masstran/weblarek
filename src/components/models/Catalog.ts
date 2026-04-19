@@ -1,27 +1,33 @@
 import {IProduct} from "../../types";
+import {IEvents} from "../base/Events.ts";
 
 export class Catalog {
-    protected _products: IProduct[] = [];
-    protected _chosenProduct: IProduct | null = null;
+    protected products: IProduct[] = [];
+    protected chosenProduct: IProduct | null = null;
+
+    constructor(protected events: IEvents) {
+    }
 
     saveProducts(products: IProduct[]) {
-        this._products = products;
+        this.products = products;
+        this.events.emit("catalog:updated");
     }
 
     getProducts(): IProduct[] {
-        return this._products;
+        return this.products;
     }
 
     saveChosenProduct(product: IProduct | null) {
-        this._chosenProduct = product;
+        this.chosenProduct = product;
+        this.events.emit("catalog:updated");
     }
 
     getChosenProduct(): IProduct | null {
-        return this._chosenProduct;
+        return this.chosenProduct;
     }
 
     getProduct(productId: string): IProduct | undefined {
-        return this._products.find(item => item.id === productId);
+        return this.products.find(item => item.id === productId);
     }
 
 }

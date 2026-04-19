@@ -1,4 +1,5 @@
 import {IBuyer, IBuyerValidationResult, TPayment} from "../../types";
+import {IEvents} from "../base/Events.ts";
 
 export class Buyer {
     private static EMPTY_BUYER: IBuyer = {
@@ -7,44 +8,51 @@ export class Buyer {
         email: '',
         phone: ''
     }
-    protected _buyer: IBuyer = structuredClone(Buyer.EMPTY_BUYER);
+    protected buyer: IBuyer = structuredClone(Buyer.EMPTY_BUYER);
+    constructor(protected events: IEvents) {
+    }
 
     setPayment(payment: TPayment) {
-        this._buyer.payment = payment;
+        this.buyer.payment = payment;
+        this.events.emit("buyer:updated");
     }
 
     setAddress(address: string) {
-        this._buyer.address = address.trim();
+        this.buyer.address = address.trim();
+        this.events.emit("buyer:updated");
     }
 
     setEmail(email: string) {
-        this._buyer.email = email.trim();
+        this.buyer.email = email.trim();
+        this.events.emit("buyer:updated");
     }
 
     setPhone(phone: string) {
-        this._buyer.phone = phone.trim();
+        this.buyer.phone = phone.trim();
+        this.events.emit("buyer:updated");
     }
 
     getBuyer(): IBuyer {
-        return this._buyer;
+        return this.buyer;
     }
 
     clear() {
-        this._buyer = structuredClone(Buyer.EMPTY_BUYER);
+        this.buyer = structuredClone(Buyer.EMPTY_BUYER);
+        this.events.emit("buyer:updated");
     }
 
     validate(): IBuyerValidationResult {
         const result: IBuyerValidationResult = {};
-        if (this._buyer.payment === '') {
+        if (this.buyer.payment === '') {
             result.payment = "Пожалуйста, укажите метод оплаты"
         }
-        if (this._buyer.phone === '') {
+        if (this.buyer.phone === '') {
             result.phone = "Пожалуйста, введите телефон в формате +79991234567"
         }
-        if (this._buyer.address === '') {
+        if (this.buyer.address === '') {
             result.address = "Пожалуйста, укажите адрес доставки"
         }
-        if (this._buyer.email === '') {
+        if (this.buyer.email === '') {
             result.email = "Пожалуйста, укажите корректный email"
         }
         return result;
