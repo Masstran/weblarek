@@ -4,7 +4,7 @@ import {Cart} from "./components/models/Cart.ts";
 import {Buyer} from "./components/models/Buyer.ts";
 import {IOrderRequest, IOrderResponse, IProduct, TModalStates} from "./types";
 import {Api} from "./components/base/Api.ts";
-import {API_URL} from "./utils/constants.ts";
+import {API_URL, CDN_URL} from "./utils/constants.ts";
 import {LarekApi} from "./components/communication/LarekApi.ts";
 import {EventEmitter, EventNames, IEvents} from "./components/base/Events.ts";
 import {ensureElement} from "./utils/utils.ts";
@@ -38,12 +38,11 @@ let modalState: TModalStates = "closed";
 
 function renderBasketModal() {
     modalState = "basket";
-    const cardProductCards: HTMLElement[] = [];
-    basketModel.getProducts().forEach(p => {
+    const cardProductCards: HTMLElement[] = basketModel.getProducts().map(p => {
         const card = new CardBasket(events, () => {
             events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, p);
         });
-        cardProductCards.push(card.render(p));
+        return card.render(p);
     });
     const basket = basketView.render({
         products: cardProductCards,
@@ -58,32 +57,36 @@ function renderChosenProductModal() {
         return;
     }
     modalState = "chosenProduct";
-    const addToBasketAction = () => {
-        events.emit(EventNames.ADD_PRODUCT_TO_BASKET, chosenProduct);
-    }
-    const removeFromBasketAction = () => {
-        events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, chosenProduct);
-    }
     const inBasket = basketModel.isPresent(chosenProduct.id);
-    const cardPreview = new CardPreview(events, addToBasketAction, removeFromBasketAction);
-    const cardRender = cardPreview.render({...chosenProduct, inBasket: inBasket});
+    const toggleBasket = () => {
+        if (inBasket) {
+            events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, chosenProduct);
+        } else {
+            events.emit(EventNames.ADD_PRODUCT_TO_BASKET, chosenProduct);
+        }
+    }
+    const cardPreview = new CardPreview(events, toggleBasket);
+    const buttonDisabled = chosenProduct.price === null;
+    const buttonText = buttonDisabled ? "Недоступно" : inBasket ? "Удалить из корзины" : "В корзину";
+    const cardRender = cardPreview.render({...chosenProduct, buttonDisabled: buttonDisabled, buttonText: buttonText});
     modalView.render({content: cardRender, active: true});
 }
 
 function renderOrderModal() {
     modalState = "order";
     const validationResult = buyerModel.validate();
-    const problems: string[] = [];
+    let problem: string = '';
     if (validationResult.payment) {
-        problems.push(validationResult.payment);
+        problem = validationResult.payment;
+    } else if (validationResult.address) {
+        problem = validationResult.address;
     }
-    if (validationResult.address) {
-        problems.push(validationResult.address);
-    }
+    const buyer = buyerModel.getBuyer();
     const order = orderView.render({
-        ...buyerModel.getBuyer(),
-        formErrors: problems,
-        buttonIsActive: problems.length === 0
+        payment: buyer.payment,
+        address: buyer.address,
+        formErrors: problem,
+        buttonIsActive: problem === ''
     });
     modalView.render({content: order});
 }
@@ -91,17 +94,18 @@ function renderOrderModal() {
 function renderContactsModal() {
     modalState = "contacts";
     const validationResult = buyerModel.validate();
-    const problems: string[] = [];
+    let problem: string = '';
     if (validationResult.email) {
-        problems.push(validationResult.email);
+        problem = validationResult.email;
+    } else if (validationResult.phone) {
+        problem = validationResult.phone;
     }
-    if (validationResult.phone) {
-        problems.push(validationResult.phone);
-    }
+    const buyer = buyerModel.getBuyer();
     const contacts = contactsView.render({
-        ...buyerModel.getBuyer(),
-        formErrors: problems,
-        buttonIsActive: problems.length === 0
+        email: buyer.email,
+        phone: buyer.phone,
+        formErrors: problem,
+        buttonIsActive: problem === ''
     });
     modalView.render({content: contacts});
 }
@@ -199,12 +203,11 @@ events.on(EventNames.CART_UPDATED, () => {
 });
 
 events.on(EventNames.CATALOG_UPDATED, () => {
-    const productCards: HTMLElement[] = [];
-    catalogModel.getProducts().forEach(p => {
+    const productCards: HTMLElement[] = catalogModel.getProducts().map(p => {
         const card = new CardCatalog(events, () => {
             events.emit(EventNames.OPEN_PRODUCT, p)
         })
-        productCards.push(card.render(p));
+        return card.render(p);
     })
     galleryView.render({gallery: productCards});
 });
@@ -213,14 +216,19 @@ events.on(EventNames.CHOSEN_PRODUCT_UPDATED, () => {
     renderChosenProductModal();
 });
 
-
-
-// Let's test api
-try {
-    const larekProducts: IProduct[] = await larekApi.getProducts();
-    catalogModel.saveProducts(larekProducts);
-} catch (err) {
-    console.log(err);
+async function init() {
+    try {
+        const response = await larekApi.getProducts();
+        const larekProducts: IProduct[] = response.items.map(p => {
+            p.image = CDN_URL + p.image;
+            return p;
+        });
+        catalogModel.saveProducts(larekProducts);
+    } catch (err) {
+        console.log(err);
+    }
 }
+
+init();
 
 

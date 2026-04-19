@@ -1,28 +1,19 @@
 import {EventNames, IEvents} from "../base/Events.ts";
-import {createElement, ensureElement} from "../../utils/utils.ts";
-import {Template} from "./Template.ts";
+import {ensureElement} from "../../utils/utils.ts";
 import {IBuyer} from "../../types";
+import {Form} from "./Form.ts";
 
-type IContacts = Omit<IBuyer, "address" | "payment"> & {formErrors?: string[], buttonIsActive?: boolean}
+type IContacts = Pick<IBuyer, "email" | "phone">
 
-export class Contacts extends Template<IContacts> {
+export class Contacts extends Form<IContacts> {
     protected emailInputElement: HTMLInputElement;
     protected phoneInputElement: HTMLInputElement;
-    protected submitButtonElement: HTMLButtonElement;
-    protected formErrorsElement: HTMLElement;
 
     constructor(protected events: IEvents) {
-        super('contacts')
+        super(events, 'contacts', EventNames.CONTACTS_SUBMIT);
 
         this.emailInputElement = ensureElement<HTMLInputElement>('input[name="email"]', this.container);
         this.phoneInputElement = ensureElement<HTMLInputElement>('input[name="phone"]', this.container);
-        this.submitButtonElement = ensureElement<HTMLButtonElement>('.button', this.container);
-        this.formErrorsElement = ensureElement<HTMLElement>('.form__errors', this.container);
-
-        this.submitButtonElement.addEventListener('click', (e) => {
-            e.preventDefault();
-            this.events.emit(EventNames.CONTACTS_SUBMIT);
-        });
 
         this.emailInputElement.addEventListener("change", () => {
             this.events.emit(EventNames.EMAIL_INPUT, {value: this.emailInputElement.value});
@@ -38,27 +29,8 @@ export class Contacts extends Template<IContacts> {
         this.emailInputElement.value = value;
     }
 
-    // Should it be here? Kind of feels like it's just user input, not some data we show...
     set phone(value: string) {
         this.phoneInputElement.value = value;
-    }
-
-    set formErrors(items: string[] | null) {
-        this.formErrorsElement.innerHTML = "";
-        if (items) {
-            items.forEach(i => {
-                const element = createElement("p");
-                element.textContent = i;
-                this.formErrorsElement.append(element);
-            });
-            this.submitButtonElement.disabled = true;
-        } else {
-            this.submitButtonElement.disabled = false;
-        }
-    }
-
-    set buttonIsActive(value: boolean | null) {
-        this.submitButtonElement.disabled = !(value ?? false);
     }
 }
 

@@ -20,6 +20,12 @@ export class Modal extends Component<IModal> {
         this.closeButtonElement.addEventListener('click', () => {
             this.events.emit(EventNames.CLOSE_MODAL);
         });
+
+        this.container.addEventListener('mousedown', (e) => {
+            if (e.target === this.container) {
+                this.events.emit(EventNames.CLOSE_MODAL);
+            }
+        })
     }
 
     set active(isActive: boolean) {

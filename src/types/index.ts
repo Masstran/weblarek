@@ -1,3 +1,5 @@
+import {categoryMap} from "../utils/constants.ts";
+
 export type ApiPostMethods = 'POST' | 'PUT' | 'DELETE';
 
 export interface IApi {
@@ -23,12 +25,7 @@ export interface IBuyer {
     phone: string
 }
 
-export interface IBuyerValidationResult {
-    payment?: string,
-    address?: string,
-    email?: string,
-    phone?: string
-}
+export type IBuyerValidationResult = Partial<Record<keyof IBuyer, string>>;
 
 export interface IOrderRequest extends IBuyer{
     total: number,
@@ -46,3 +43,5 @@ export interface IProductResponse {
 }
 
 export type TModalStates = "basket" | "chosenProduct" | "order" | "contacts" | "success" | "closed";
+
+export type CategoryMapKey = keyof typeof categoryMap;

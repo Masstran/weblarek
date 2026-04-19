@@ -3,7 +3,7 @@ import {Card} from "./Card.ts";
 import {ensureElement} from "../../utils/utils.ts";
 
 
-export class CardBasket extends Card {
+export class CardBasket extends Card<void> {
     protected cardButtonElement: HTMLButtonElement;
 
     constructor(protected events: IEvents, removeFromBasketAction: () => void) {
