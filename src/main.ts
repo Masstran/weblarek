@@ -2,18 +2,16 @@ import './scss/styles.scss';
 import {Catalog} from "./components/models/Catalog.ts";
 import {Cart} from "./components/models/Cart.ts";
 import {Buyer} from "./components/models/Buyer.ts";
-import {apiProducts} from "./utils/data.ts";
-import {IOrderResponse, IProduct} from "./types";
+import {IOrderRequest, IOrderResponse, IProduct, TModalStates} from "./types";
 import {Api} from "./components/base/Api.ts";
 import {API_URL} from "./utils/constants.ts";
 import {LarekApi} from "./components/communication/LarekApi.ts";
-import {EventEmitter, IEvents} from "./components/base/Events.ts";
+import {EventEmitter, EventNames, IEvents} from "./components/base/Events.ts";
 import {ensureElement} from "./utils/utils.ts";
 import {Gallery} from "./components/views/Gallery.ts";
 import {Modal} from "./components/views/Modal.ts";
 import {Success} from "./components/views/Success.ts";
 import {CardCatalog} from "./components/views/CardCatalog.ts";
-import {Card} from "./components/views/Card.ts";
 import {CardPreview} from "./components/views/CardPreview.ts";
 import {Basket} from "./components/views/Basket.ts";
 import {Header} from "./components/views/Header.ts";
@@ -21,132 +19,208 @@ import {CardBasket} from "./components/views/CardBasket.ts";
 import {Order} from "./components/views/Order.ts";
 import {Contacts} from "./components/views/Contacts.ts";
 
-const catalog = new Catalog();
-const cart = new Cart();
-const buyer = new Buyer();
-
-const products: IProduct[] = apiProducts.items;
-
-catalog.saveProducts(products);
-console.log(`Массив товаров из каталога: `, catalog.getProducts());
-
-catalog.saveChosenProduct(products[0]);
-console.log('Выбранный продукт в каталоге: ', catalog.getChosenProduct());
-
-console.log('Существующий продукт по id: ', catalog.getProduct(products[0].id));
-
-console.log('Несуществующий продукт по id: ', catalog.getProduct("Not-an-id"));
-
-cart.addProduct(products[0]);
-cart.addProduct(products[1]);
-
-console.log('Количество товаров в корзине после добавления товара: ', cart.getProductAmount());
-
-console.log('Список товаров корзины: ', cart.getProducts());
-console.log('Общая стоимость товаров: ', cart.getTotalPrice());
-console.log('Количество товаров: ', cart.getProductAmount());
-
-console.log('Присутствие товара в корзине: ', cart.isPresent(products[0].id));
-console.log('Присутствие левого товара в корзине: ', cart.isPresent('Not-an-id'));
-
-cart.removeProduct(products[0]);
-console.log('Количество товаров в корзине после удаления товара: ', cart.getProductAmount());
-
-cart.clear();
-console.log('Список товаров корзины после очистки: ', cart.getProducts());
-
-
-buyer.setAddress('abc')
-buyer.setEmail('a@b.c')
-buyer.setPhone('+79991234567')
-buyer.setPayment('card')
-console.log('Покупатель: ', buyer.getBuyer());
-console.log('Валидация корректного покупателя: ', buyer.validate());
-
-buyer.clear();
-console.log('Покупатель после clear: ', buyer.getBuyer());
-console.log('Валидация некорректного покупателя: ', buyer.validate());
-
-// Let's test api
-
+const events: IEvents = new EventEmitter();
 const api = new Api(API_URL);
 const larekApi = new LarekApi(api);
-try {
-    const larekProducts: IProduct[] = await larekApi.getProducts();
-    catalog.saveProducts(larekProducts);
-    console.log('Продукты из API: ', catalog.getProducts());
-    cart.addProduct(larekProducts[0]);
-    cart.addProduct(larekProducts[1]);
-    console.log('Корзина: ', cart.getProducts())
-    buyer.setAddress('abc')
-    buyer.setEmail('a@b.c')
-    buyer.setPhone('+79991234567')
-    buyer.setPayment('card')
-    console.log('Покупатель: ', buyer.getBuyer())
-    const response: IOrderResponse = await larekApi.sendOrder({
-        ...buyer.getBuyer(),
-        total: cart.getTotalPrice(),
-        items: cart.getProducts().map(product => product.id)
-    })
 
-    console.log('Результат заказа: ', response)
-} catch (err) {
-    console.log(err);
+const catalogModel = new Catalog(events);
+const basketModel = new Cart(events);
+const buyerModel = new Buyer(events);
+const headerView = new Header(events, ensureElement<HTMLElement>(".header"));
+const galleryView = new Gallery(events, ensureElement<HTMLElement>(".gallery"));
+const modalView = new Modal(events, ensureElement<HTMLElement>(".modal"));
+const basketView = new Basket(events);
+const orderView = new Order(events);
+const contactsView = new Contacts(events);
+const successView = new Success(events);
+
+let modalState: TModalStates = "closed";
+
+function renderBasketModal() {
+    modalState = "basket";
+    const cardProductCards: HTMLElement[] = [];
+    basketModel.getProducts().forEach(p => {
+        const card = new CardBasket(events, () => {
+            events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, p);
+        });
+        cardProductCards.push(card.render(p));
+    });
+    const basket = basketView.render({
+        products: cardProductCards,
+        price: basketModel.getTotalPrice()
+    });
+    modalView.render({content: basket, active: true});
 }
 
+function renderChosenProductModal() {
+    const chosenProduct = catalogModel.getChosenProduct();
+    if (chosenProduct === null) {
+        return;
+    }
+    modalState = "chosenProduct";
+    const addToBasketAction = () => {
+        events.emit(EventNames.ADD_PRODUCT_TO_BASKET, chosenProduct);
+    }
+    const removeFromBasketAction = () => {
+        events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, chosenProduct);
+    }
+    const inBasket = basketModel.isPresent(chosenProduct.id);
+    const cardPreview = new CardPreview(events, addToBasketAction, removeFromBasketAction);
+    const cardRender = cardPreview.render({...chosenProduct, inBasket: inBasket});
+    modalView.render({content: cardRender, active: true});
+}
 
-// Test view layer
-const galleryElement = document.querySelector('.gallery');
-const modalElement = document.querySelector('.modal');
-const headerElement = document.querySelector('.header');
-const events: IEvents = new EventEmitter();
+function renderOrderModal() {
+    modalState = "order";
+    const validationResult = buyerModel.validate();
+    const problems: string[] = [];
+    if (validationResult.payment) {
+        problems.push(validationResult.payment);
+    }
+    if (validationResult.address) {
+        problems.push(validationResult.address);
+    }
+    const order = orderView.render({
+        ...buyerModel.getBuyer(),
+        formErrors: problems,
+        buttonIsActive: problems.length === 0
+    });
+    modalView.render({content: order});
+}
 
-const gallery = new Gallery(events, ensureElement<HTMLElement>(".gallery"));
-const productCards: HTMLElement[] = [];
-try {
-    const larekProducts: IProduct[] = await larekApi.getProducts();
-    larekProducts.forEach(p => {
+function renderContactsModal() {
+    modalState = "contacts";
+    const validationResult = buyerModel.validate();
+    const problems: string[] = [];
+    if (validationResult.email) {
+        problems.push(validationResult.email);
+    }
+    if (validationResult.phone) {
+        problems.push(validationResult.phone);
+    }
+    const contacts = contactsView.render({
+        ...buyerModel.getBuyer(),
+        formErrors: problems,
+        buttonIsActive: problems.length === 0
+    });
+    modalView.render({content: contacts});
+}
+
+function renderModalClose() {
+    modalState = 'closed';
+    modalView.render({active: false});
+}
+
+events.on(EventNames.OPEN_BASKET, () => {
+    renderBasketModal();
+});
+events.on(EventNames.CLOSE_MODAL, () => {
+    renderModalClose();
+});
+events.on(EventNames.OPEN_PRODUCT, (data: IProduct) => {
+    catalogModel.saveChosenProduct(data);
+});
+events.on(EventNames.ADD_PRODUCT_TO_BASKET, (data: IProduct) => {
+    basketModel.addProduct(data);
+    renderModalClose();
+});
+events.on(EventNames.REMOVE_PRODUCT_FROM_BASKET, (data: IProduct) => {
+    basketModel.removeProduct(data);
+    if (modalState === "chosenProduct") {
+        renderModalClose();
+    }
+});
+events.on(EventNames.BASKET_ORDER, () => {
+    renderOrderModal();
+});
+
+events.on(EventNames.PAYMENT_CARD, () => {
+    buyerModel.setPayment("card");
+});
+events.on(EventNames.PAYMENT_CASH, () => {
+    buyerModel.setPayment("cash");
+});
+events.on(EventNames.ADDRESS_INPUT, (data: {value: string}) => {
+    buyerModel.setAddress(data.value);
+});
+events.on(EventNames.ORDER_SUBMIT, () => {
+    console.assert(modalState === "order")
+    renderContactsModal();
+});
+events.on(EventNames.EMAIL_INPUT, (data: {value: string}) => {
+    buyerModel.setEmail(data.value);
+});
+events.on(EventNames.PHONE_INPUT, (data: {value: string}) => {
+    buyerModel.setPhone(data.value);
+});
+events.on(EventNames.CONTACTS_SUBMIT, () => {
+    console.assert(modalState === "contacts")
+    const order: IOrderRequest = {
+        ...buyerModel.getBuyer(),
+        total: basketModel.getTotalPrice(),
+        items: basketModel.getProducts().map(product => product.id)
+    }
+    larekApi.sendOrder(order)
+        .then((response: IOrderResponse) => {
+            modalState = "success";
+            const success = successView.render({amount: response.total});
+            modalView.render({content: success});
+            buyerModel.clear();
+            basketModel.clear();
+        })
+        .catch((err) => {
+            console.log(err);
+        });
+});
+events.on(EventNames.SUCCESS_CLOSE, () => {
+    modalState = "closed";
+    modalView.render({active: false});
+})
+events.on(EventNames.BUYER_UPDATED, () => {
+
+    if (modalState === "order") {
+        renderOrderModal();
+    }
+    if (modalState === "contacts") {
+        renderContactsModal();
+    }
+});
+
+
+events.on(EventNames.CART_UPDATED, () => {
+    headerView.render({counter: basketModel.getProductAmount()});
+    if (modalState === "basket") {
+       renderBasketModal();
+    }
+    if (modalState === "chosenProduct") {
+        renderChosenProductModal();
+    }
+
+});
+
+events.on(EventNames.CATALOG_UPDATED, () => {
+    const productCards: HTMLElement[] = [];
+    catalogModel.getProducts().forEach(p => {
         const card = new CardCatalog(events, () => {
-            events.emit("product:open", p)
+            events.emit(EventNames.OPEN_PRODUCT, p)
         })
         productCards.push(card.render(p));
     })
+    galleryView.render({gallery: productCards});
+});
+
+events.on(EventNames.CHOSEN_PRODUCT_UPDATED, () => {
+    renderChosenProductModal();
+});
+
+
+
+// Let's test api
+try {
+    const larekProducts: IProduct[] = await larekApi.getProducts();
+    catalogModel.saveProducts(larekProducts);
 } catch (err) {
     console.log(err);
 }
 
-const modal = new Modal(events, ensureElement<HTMLElement>(".modal"));
-// const header = new Header(events, ensureElement<HTMLElement>(".header"));
-const success = new Success(events);
-const basket = new Basket(events);
-const header = new Header(events, ensureElement<HTMLElement>(".header"));
-// headerElement?.replaceWith(header.render({counter: cart.getProductAmount()}));
-// const cardsBasket: HTMLElement[] = [];
-// cart.getProducts().forEach(p => {
-//     const cardBasket = new CardBasket(events, () => {});
-//     cardsBasket.push(cardBasket.render(p));
-// })
-// modalElement?.replaceWith(modal.render({content: basket.render({products: cardsBasket, price: cart.getTotalPrice()}), active: true}))
 
-const order = new Order(events);
-const contacts = new Contacts(events);
-modalElement?.replaceWith(modal.render({content: order.render({buttonIsActive: true}), active: true}))
-
-// const component = new Gallery(events, document.querySelector('.gallery') || document.createElement("div"));
-// const listItem = document.createElement("div");
-// listItem.innerHTML = "<span>Wtf</span>";
-// component.gallery = Array.of(listItem);
-events.on("product:open", p => {
-    const cardPreview = new CardPreview(events, () => {}, () => {});
-    modalElement?.replaceWith(modal.render({content: cardPreview.render(p), active: true}))
-})
-events.on("modal:close", () => {
-    modalElement?.replaceWith(modal.render({active: false}))
-})
-events.on("basket:open", () => {
-    modalElement?.replaceWith(modal.render({content: basket.render(), active:true}))
-})
-events.on("order:submit", () => {
-    modalElement?.replaceWith(modal.render({content: contacts.render(), active: true}))
-})
-galleryElement?.replaceWith(gallery.render({gallery: productCards}));

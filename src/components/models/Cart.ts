@@ -1,5 +1,5 @@
 import {IProduct} from "../../types";
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 
 export class Cart {
     protected products: IProduct[] = [];
@@ -13,18 +13,18 @@ export class Cart {
 
     addProduct(product: IProduct) {
         this.products.push(product);
-        this.events.emit("cart:updated");
+        this.events.emit(EventNames.CART_UPDATED);
     }
 
     removeProduct(product: IProduct) {
         const index = this.products.indexOf(product);
         this.products.splice(index, 1);
-        this.events.emit("cart:updated");
+        this.events.emit(EventNames.CART_UPDATED);
     }
 
     clear() {
         this.products = [];
-        this.events.emit("cart:updated");
+        this.events.emit(EventNames.CART_UPDATED);
     }
 
     getTotalPrice(): number {

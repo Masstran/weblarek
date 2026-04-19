@@ -1,5 +1,5 @@
 import {IBuyer, IBuyerValidationResult, TPayment} from "../../types";
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 
 export class Buyer {
     private static EMPTY_BUYER: IBuyer = {
@@ -14,22 +14,22 @@ export class Buyer {
 
     setPayment(payment: TPayment) {
         this.buyer.payment = payment;
-        this.events.emit("buyer:updated");
+        this.events.emit(EventNames.BUYER_UPDATED);
     }
 
     setAddress(address: string) {
         this.buyer.address = address.trim();
-        this.events.emit("buyer:updated");
+        this.events.emit(EventNames.BUYER_UPDATED);
     }
 
     setEmail(email: string) {
         this.buyer.email = email.trim();
-        this.events.emit("buyer:updated");
+        this.events.emit(EventNames.BUYER_UPDATED);
     }
 
     setPhone(phone: string) {
         this.buyer.phone = phone.trim();
-        this.events.emit("buyer:updated");
+        this.events.emit(EventNames.BUYER_UPDATED);
     }
 
     getBuyer(): IBuyer {
@@ -38,7 +38,7 @@ export class Buyer {
 
     clear() {
         this.buyer = structuredClone(Buyer.EMPTY_BUYER);
-        this.events.emit("buyer:updated");
+        this.events.emit(EventNames.BUYER_UPDATED);
     }
 
     validate(): IBuyerValidationResult {

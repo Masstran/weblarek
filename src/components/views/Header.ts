@@ -1,5 +1,5 @@
 import {Component} from "../base/Component.ts";
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 import {ensureElement} from "../../utils/utils.ts";
 
 interface IHeader {
@@ -17,7 +17,7 @@ export class Header extends Component<IHeader> {
         this.basketButtonElement = ensureElement<HTMLButtonElement>('.header__basket', this.container);
 
         this.basketButtonElement.addEventListener('click', () => {
-            this.events.emit('basket:open');
+            this.events.emit(EventNames.OPEN_BASKET);
         });
     }
 

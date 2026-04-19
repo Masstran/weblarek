@@ -1,9 +1,9 @@
-import {IEvents} from "../base/Events.ts";
-import {ensureElement} from "../../utils/utils.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
+import {createElement, ensureElement} from "../../utils/utils.ts";
 import {Template} from "./Template.ts";
 import {IBuyer, TPayment} from "../../types";
 
-type IOrder = Omit<IBuyer, "email" | "phone"> & {formErrors?: HTMLElement[], buttonIsActive?: boolean}
+type IOrder = Omit<IBuyer, "email" | "phone"> & {formErrors?: string[], buttonIsActive?: boolean}
 
 export class Order extends Template<IOrder> {
     protected cardPaymentButtonElement: HTMLButtonElement;
@@ -21,25 +21,21 @@ export class Order extends Template<IOrder> {
         this.submitButtonElement = ensureElement<HTMLButtonElement>('.order__button', this.container);
         this.formErrorsElement = ensureElement<HTMLElement>('.form__errors', this.container);
 
-        this.submitButtonElement.addEventListener('click', () => {
-            const payment: TPayment = this.cardPaymentButtonElement.classList.contains("button_alt-active") ? "card" :
-                this.cashPaymentButtonElement.classList.contains("button_alt-active") ? "cash" : "";
-            this.events.emit('order:submit', {
-                payment: payment,
-                address: this.addressInputElement.value,
-            });
+        this.submitButtonElement.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.events.emit(EventNames.ORDER_SUBMIT);
         });
 
         this.cardPaymentButtonElement.addEventListener('click', () => {
-            this.events.emit('order:payment:select:card');
+            this.events.emit(EventNames.PAYMENT_CARD);
         });
 
         this.cashPaymentButtonElement.addEventListener('click', () => {
-            this.events.emit('order:payment:select:cash');
+            this.events.emit(EventNames.PAYMENT_CASH);
         });
 
-        this.addressInputElement.addEventListener("input", () => {
-            this.events.emit('order:address:input', {value: this.addressInputElement.value});
+        this.addressInputElement.addEventListener("change", () => {
+            this.events.emit(EventNames.ADDRESS_INPUT, {value: this.addressInputElement.value});
         })
 
     }
@@ -61,13 +57,17 @@ export class Order extends Template<IOrder> {
 
     // Should it be here? Kind of feels like it's just user input, not some data we show...
     set address(value: string) {
-        this.addressInputElement.textContent = value;
+        this.addressInputElement.value = value;
     }
 
-    set formErrors(items: HTMLElement[] | null) {
+    set formErrors(items: string[] | null) {
         this.formErrorsElement.innerHTML = "";
         if (items) {
-            items.forEach(i => this.formErrorsElement.append(i));
+            items.forEach(i => {
+                const element = createElement("p");
+                element.textContent = i;
+                this.formErrorsElement.append(element);
+            });
             this.submitButtonElement.disabled = true;
         } else {
             this.submitButtonElement.disabled = false;

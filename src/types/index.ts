@@ -44,3 +44,5 @@ export interface IProductResponse {
     total: number,
     items: IProduct[]
 }
+
+export type TModalStates = "basket" | "chosenProduct" | "order" | "contacts" | "success" | "closed";

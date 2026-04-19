@@ -1,4 +1,4 @@
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 import {ensureElement} from "../../utils/utils.ts";
 import {Template} from "./Template.ts";
 
@@ -20,7 +20,7 @@ export class Basket extends Template<IBasket> {
         this.orderButtonElement = ensureElement<HTMLButtonElement>('.basket__button', this.container);
 
         this.orderButtonElement.addEventListener('click', () => {
-            this.events.emit('basket:order');
+            this.events.emit(EventNames.BASKET_ORDER);
         });
     }
 

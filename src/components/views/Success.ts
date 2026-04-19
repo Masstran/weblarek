@@ -1,4 +1,4 @@
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 import {ensureElement} from "../../utils/utils.ts";
 import {Template} from "./Template.ts";
 
@@ -17,7 +17,7 @@ export class Success extends Template<ISuccess> {
         this.closeButtonElement = ensureElement<HTMLButtonElement>('.order-success__close', this.container);
 
         this.closeButtonElement.addEventListener('click', () => {
-            this.events.emit('success:close');
+            this.events.emit(EventNames.SUCCESS_CLOSE);
         });
     }
 

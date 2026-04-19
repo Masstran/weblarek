@@ -388,18 +388,40 @@ Presenter - презентер содержит основную логику п
 ### События
 
 `basket:open` - нажата кнопка открытия корзины
+
+`basket:order` - нажата кнопка оформления заказа
+
 `modal:close` - нажата кнопка закрытия модального окна
+
 `product:open` - нажата кнопка открытия продукта (нажата карточка товара)
+
 `product:addToBasket` - нажата кнопка добавления товара в корзину
+
 `product:removeFromBasket` - нажата кнопка удаления товара из корзины
+
 `order:payment:select:card` - выбран способ оплаты "картой"
+
 `order:payment:select:cash` - выбран способ оплаты "наличными"
+
 `order:address:input` - изменён инпут адреса
+
 `order:submit` - нажата кнопка отправки формы класса Order
+
 `contacts:email:input` - изменён инпут email
+
 `contacts:phone:input` - изменён инпут номера телефона
+
 `contacts:submit` - нажата кнопка отправки формы класса Contacts
+
+`success:close` - нажата кнопка закрытия в модальном окне Success
+
 `buyer:updated` - модель покупателя была изменена
+
 `cart:updated` - модель корзины была изменена
+
 `catalog:updated` - модель каталога была изменена
+
+### Презентер
+
+Написан в main.ts
 

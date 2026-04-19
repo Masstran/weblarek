@@ -1,5 +1,5 @@
 import {IProduct} from "../../types";
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 
 export class Catalog {
     protected products: IProduct[] = [];
@@ -10,7 +10,7 @@ export class Catalog {
 
     saveProducts(products: IProduct[]) {
         this.products = products;
-        this.events.emit("catalog:updated");
+        this.events.emit(EventNames.CATALOG_UPDATED);
     }
 
     getProducts(): IProduct[] {
@@ -19,7 +19,7 @@ export class Catalog {
 
     saveChosenProduct(product: IProduct | null) {
         this.chosenProduct = product;
-        this.events.emit("catalog:updated");
+        this.events.emit(EventNames.CHOSEN_PRODUCT_UPDATED);
     }
 
     getChosenProduct(): IProduct | null {

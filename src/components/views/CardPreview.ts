@@ -21,6 +21,9 @@ export class CardPreview extends Card {
     }
 
     set inBasket(value: boolean) {
+        if (this.cardButtonElement.disabled) {
+            return
+        }
         if (value) {
             this.cardButtonElement.textContent = "Удалить из корзины";
             this.cardButtonElement.removeEventListener("click", this.addToBasketAction);
