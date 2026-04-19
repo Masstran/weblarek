@@ -7,6 +7,19 @@ import {IOrderResponse, IProduct} from "./types";
 import {Api} from "./components/base/Api.ts";
 import {API_URL} from "./utils/constants.ts";
 import {LarekApi} from "./components/communication/LarekApi.ts";
+import {EventEmitter, IEvents} from "./components/base/Events.ts";
+import {ensureElement} from "./utils/utils.ts";
+import {Gallery} from "./components/views/Gallery.ts";
+import {Modal} from "./components/views/Modal.ts";
+import {Success} from "./components/views/Success.ts";
+import {CardCatalog} from "./components/views/CardCatalog.ts";
+import {Card} from "./components/views/Card.ts";
+import {CardPreview} from "./components/views/CardPreview.ts";
+import {Basket} from "./components/views/Basket.ts";
+import {Header} from "./components/views/Header.ts";
+import {CardBasket} from "./components/views/CardBasket.ts";
+import {Order} from "./components/views/Order.ts";
+import {Contacts} from "./components/views/Contacts.ts";
 
 const catalog = new Catalog();
 const cart = new Cart();
@@ -80,3 +93,60 @@ try {
 } catch (err) {
     console.log(err);
 }
+
+
+// Test view layer
+const galleryElement = document.querySelector('.gallery');
+const modalElement = document.querySelector('.modal');
+const headerElement = document.querySelector('.header');
+const events: IEvents = new EventEmitter();
+
+const gallery = new Gallery(events, ensureElement<HTMLElement>(".gallery"));
+const productCards: HTMLElement[] = [];
+try {
+    const larekProducts: IProduct[] = await larekApi.getProducts();
+    larekProducts.forEach(p => {
+        const card = new CardCatalog(events, () => {
+            events.emit("product:open", p)
+        })
+        productCards.push(card.render(p));
+    })
+} catch (err) {
+    console.log(err);
+}
+
+const modal = new Modal(events, ensureElement<HTMLElement>(".modal"));
+// const header = new Header(events, ensureElement<HTMLElement>(".header"));
+const success = new Success(events);
+const basket = new Basket(events);
+const header = new Header(events, ensureElement<HTMLElement>(".header"));
+// headerElement?.replaceWith(header.render({counter: cart.getProductAmount()}));
+// const cardsBasket: HTMLElement[] = [];
+// cart.getProducts().forEach(p => {
+//     const cardBasket = new CardBasket(events, () => {});
+//     cardsBasket.push(cardBasket.render(p));
+// })
+// modalElement?.replaceWith(modal.render({content: basket.render({products: cardsBasket, price: cart.getTotalPrice()}), active: true}))
+
+const order = new Order(events);
+const contacts = new Contacts(events);
+modalElement?.replaceWith(modal.render({content: order.render({buttonIsActive: true}), active: true}))
+
+// const component = new Gallery(events, document.querySelector('.gallery') || document.createElement("div"));
+// const listItem = document.createElement("div");
+// listItem.innerHTML = "<span>Wtf</span>";
+// component.gallery = Array.of(listItem);
+events.on("product:open", p => {
+    const cardPreview = new CardPreview(events, () => {}, () => {});
+    modalElement?.replaceWith(modal.render({content: cardPreview.render(p), active: true}))
+})
+events.on("modal:close", () => {
+    modalElement?.replaceWith(modal.render({active: false}))
+})
+events.on("basket:open", () => {
+    modalElement?.replaceWith(modal.render({content: basket.render(), active:true}))
+})
+events.on("order:submit", () => {
+    modalElement?.replaceWith(modal.render({content: contacts.render(), active: true}))
+})
+galleryElement?.replaceWith(gallery.render({gallery: productCards}));

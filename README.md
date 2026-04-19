@@ -200,3 +200,202 @@ Presenter - презентер содержит основную логику п
 Методы:  
 `async getProducts(): Promise<IProduct[]>` - возвращает промис на список продуктов из API
 `async sendOrder(order: IOrderRequest): Promise<IOrderResponse>` - отправляет заказ в API и возвращает промис с результатом
+
+### Слой представления
+
+#### Класс Template<T>
+
+Наследует класс Component<T>. Объединяет в себе общую логику элементов, использующих функционал шаблонов
+
+Конструктор:
+`constructor(templateId: string)` - клонирует шаблон и использует его в классе Component
+
+Поля класса отсутствуют
+Методы класса отсутствуют
+
+#### Класс Header
+
+Наследует класс Component<IHeader>, где IHeader - тип `{counter: number}`
+
+Конструктор:
+`constructor(protected events: IEvents, container: HTMLElement)` - конструктор принимает брокер событий и свой контейнер
+
+Поля класса:
+`counterElement: HTMLElement` - элемент счётчик корзины
+`basketButtonElement: HTMLElement` - кнопка открытия корзины
+
+Методы:
+`set counter(value: number)` - отображает новое значение на счётчике
+
+#### Класс Gallery
+
+Наследует класс Component<IGallery>, где IGallery - тип `{gallery: HTMLElement[]}`
+
+Конструктор:
+`constructor(protected events: IEvents, container: HTMLElement)` - конструктор принимает брокер событий и свой контейнер
+
+Поля класса:
+`catalogElement: HTMLElement` - верхний элемент каталога, под которым создаются карточки товаров
+
+Методы:
+`set gallery(items: HTMLElement[])` - заменяет элементы каталога
+
+#### Класс Modal
+
+Наследует класс Component<IModal>, где IModal - тип `{content: HTMLElement; active: boolean;}`
+
+Конструктор:
+`constructor(protected events: IEvents, container: HTMLElement)` - конструктор принимает брокер событий и свой контейнер
+
+Поля класса:
+`modalContentElement: HTMLElement` - элемент контента модального окна
+`closeButtonElement: HTMLButtonElement` - кнопка закрытия модального окна
+
+Методы:
+`set active(isActive: boolean)` - выставляет открыто ли модальное окно
+`set content(element: HTMLElement)` - изменяет контент модального окна
+
+
+#### Класс Card
+Общий класс для всех Card сущностей
+
+Наследует класс Template<ICard>, где ICard - тип `Omit<IProduct, 'id'> & {inBasket?: boolean}`
+
+Дополнительно определён тип `type CategoryMapKey = keyof typeof categoryMap`
+
+Конструктор:
+`constructor(templateId: string)` - создаёт контейнер из темплейта и находит нужные элементы в нём
+
+Поля класса:
+`categoryElement: HTMLElement | null` - элемент категории товара (если есть)
+`titleElement: HTMLElement | null` - элемент имени товара (если есть)
+`imageElement: HTMLImageElement | null` - элемент изображения товара (если есть)
+`priceElement: HTMLElement | null` - элемент цены товара (если есть)
+`textElement: HTMLElement | null` - элемент описания товара (если есть)
+
+Методы:
+`set category(value: CategoryMapKey)` - выставляет значение категории товара
+`set title(value: string)` - выставляет значение имени товара
+`set image(value: string)` - выставляет значение изображения товара
+`set price(value: number | null)` - выставляет значение цены товара (или бесценно, если цена отсутствует)
+`set description(value: string)` - выставляет значение описания товара
+
+#### Класс CardCatalog
+
+Наследует класс Card
+
+Конструктор:
+`constructor(protected events: IEvents, onClickAction: () => void)` - конструктор принимает брокер событий и действие по нажатию на элемент
+
+Поля класса:
+`cardButtonElement: HTMLButtonElement` - кнопка для открытия товара
+
+Методы отсутствуют
+
+#### Класс CardPreview
+
+Наследует класс Card
+
+Конструктор:
+`constructor(protected events: IEvents, protected addToBasketAction: () => void, protected removeFromBasketAction: () => void)` - конструктор принимает брокер событий и действия добавления и удаления товара из корзины
+
+Поля класса:
+`cardButtonElement: HTMLButtonElement` - кнопка добавления/удаления товара из корзины
+
+Методы:
+`set price(value: number | null)` - вызывает родительский метод, а также деактивирует кнопку покупки если цена не указана
+`set inBasket(value: boolean)` - заменяет кнопку добавления/удаления товара из корзины в зависимости от того, есть ли он в корзине
+
+#### Класс CardBasket
+
+Наследует класс Card
+
+Конструктор:
+`constructor(protected events: IEvents, removeFromBasketAction: () => void)` - конструктор принимает брокер событий и действие удаления товара из корзины
+
+Поля класса:
+`cardButtonElement: HTMLButtonElement` - кнопка удаления товара из корзины
+
+Методы отсутствуют
+
+#### Класс Basket
+
+Наследует класс Template<IBasket>, где IBasket - тип `{products: HTMLElement[]; price: number;}`
+
+Конструктор:
+`constructor(protected events: IEvents)` - конструктор принимает брокер событий
+
+Поля класса:
+`priceElement: HTMLElement` - элемент общей стоимости корзины
+`listElement: HTMLElement` - верхний элемент списка товаров
+`orderButtonElement: HTMLButtonElement` - кнопка оформления заказа
+
+Методы:
+`set price(value: number)` - выставляет общую стоимость товаров
+`set products(items: HTMLElement[])` - выставляет список товаров
+
+#### Класс Order
+Наследует класс Template<IOrder>, где IOrder - тип `Omit<IBuyer, "email" | "phone"> & {formErrors?: HTMLElement[], buttonIsActive?: boolean`
+
+Конструктор:
+`constructor(protected events: IEvents)` - конструктор принимает брокер событий
+
+Поля класса:
+`cardPaymentButtonElement: HTMLButtonElement` - кнопка выбрать способ оплаты "картой"
+`cashPaymentButtonElement: HTMLButtonElement` - кнопка выбрать способ оплаты "наличкой"
+`addressInputElement: HTMLInputElement` - инпут ввода адреса
+`submitButtonElement: HTMLButtonElement` - кнопка отправки формы
+`formErrorsElement: HTMLElement` - верхний элемент списка ошибок
+
+Методы:
+`set payment(value: TPayment)` - выставляет выбранный способ оплаты
+`set address(value: string)` - выставляет адрес
+`set formErrors(items: HTMLElement[] | null)` - выставляет список ошибок
+`set buttonIsActive(value: boolean | null)` - выставляет активна ли кнопка отправки формы
+
+#### Класс Contacts
+
+Наследует класс Template<IContacts>, где IContacts - тип `Omit<IBuyer, "address" | "payment"> & {formErrors?: HTMLElement[], buttonIsActive?: boolean`
+
+Конструктор:
+`constructor(protected events: IEvents)` - конструктор принимает брокер событий
+
+Поля класса:
+`emailInputElement: HTMLInputElement` - инпут ввода email
+`phoneInputElement: HTMLInputElement` - инпут ввода номера телефона
+`submitButtonElement: HTMLButtonElement` - кнопка отправки формы
+`formErrorsElement: HTMLElement` - верхний элемент списка ошибок
+
+Методы:
+`set email(value: string)` - выставляет email
+`set phone(value: string)` - выставляет номер телефона
+`set formErrors(items: HTMLElement[] | null)` - выставляет список ошибок
+`set buttonIsActive(value: boolean | null)` - выставляет активна ли кнопка отправки формы
+
+#### Класс Success
+Наследует класс Template<ISuccess>, где ISuccess - тип `{amount: number}`
+
+Конструктор:
+`constructor(protected events: IEvents)` - конструктор принимает брокер событий
+
+Поля класса:
+`amountElement: HTMLElement` - элемент общего количества потраченных денег
+`closeButtonElement: HTMLButtonElement` - кнопка закрытия
+
+Методы:
+`set amount(value: number)` - выставляет количество потраченных денег
+
+### События
+
+`basket:open` - нажата кнопка открытия корзины
+`modal:close` - нажата кнопка закрытия модального окна
+`product:open` - нажата кнопка открытия продукта (нажата карточка товара)
+`product:addToBasket` - нажата кнопка добавления товара в корзину
+`product:removeFromBasket` - нажата кнопка удаления товара из корзины
+`order:payment:select:card` - выбран способ оплаты "картой"
+`order:payment:select:cash` - выбран способ оплаты "наличными"
+`order:address:input` - изменён инпут адреса
+`order:submit` - нажата кнопка отправки формы класса Order
+`contacts:email:input` - изменён инпут email
+`contacts:phone:input` - изменён инпут номера телефона
+`contacts:submit` - нажата кнопка отправки формы класса Contacts
