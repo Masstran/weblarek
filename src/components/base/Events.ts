@@ -11,7 +11,6 @@ export enum EventNames {
     OPEN_BASKET = "basket:open",
     CLOSE_MODAL = "modal:close",
     OPEN_PRODUCT = "product:open",
-    ADD_PRODUCT_TO_BASKET = "product:addToBasket",
     REMOVE_PRODUCT_FROM_BASKET = "product:removeFromBasket",
     PAYMENT_CARD = "order:payment:select:card",
     PAYMENT_CASH = "order:payment:select:cash",
@@ -26,6 +25,7 @@ export enum EventNames {
     CHOSEN_PRODUCT_UPDATED = "catalog:chosenProduct:updated",
     SUCCESS_CLOSE = "success:close",
     BASKET_ORDER = "basket:order",
+    PREVIEW_TOGGLE = "preview:toggle",
 
 }
 

@@ -1,4 +1,4 @@
-import {IEvents} from "../base/Events.ts";
+import {EventNames, IEvents} from "../base/Events.ts";
 import {Card} from "./Card.ts";
 import {ensureElement} from "../../utils/utils.ts";
 import {CategoryMapKey, IProduct} from "../../types";
@@ -14,7 +14,7 @@ export class CardPreview extends Card<ICardPreview> {
     protected textElement: HTMLElement;
     protected cardButtonElement: HTMLButtonElement;
 
-    constructor(protected events: IEvents, protected toggleBasket: () => void) {
+    constructor(protected events: IEvents) {
         super('card-preview');
 
         this.categoryElement = ensureElement<HTMLElement>('.card__category', this.container);
@@ -22,7 +22,9 @@ export class CardPreview extends Card<ICardPreview> {
         this.textElement = ensureElement<HTMLElement>('.card__text', this.container);
         this.cardButtonElement = ensureElement<HTMLButtonElement>(".card__button", this.container);
 
-        this.cardButtonElement.addEventListener("click", toggleBasket);
+        this.cardButtonElement.addEventListener("click", () => {
+            events.emit(EventNames.PREVIEW_TOGGLE)
+        });
     }
 
 

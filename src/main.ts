@@ -33,16 +33,18 @@ const basketView = new Basket(events);
 const orderView = new Order(events);
 const contactsView = new Contacts(events);
 const successView = new Success(events);
+const cardPreview = new CardPreview(events);
 
 let modalState: TModalStates = "closed";
 
 function renderBasketModal() {
     modalState = "basket";
+    let counter: number = 0;
     const cardProductCards: HTMLElement[] = basketModel.getProducts().map(p => {
         const card = new CardBasket(events, () => {
             events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, p);
         });
-        return card.render(p);
+        return card.render({...p, index: ++counter});
     });
     const basket = basketView.render({
         products: cardProductCards,
@@ -58,14 +60,6 @@ function renderChosenProductModal() {
     }
     modalState = "chosenProduct";
     const inBasket = basketModel.isPresent(chosenProduct.id);
-    const toggleBasket = () => {
-        if (inBasket) {
-            events.emit(EventNames.REMOVE_PRODUCT_FROM_BASKET, chosenProduct);
-        } else {
-            events.emit(EventNames.ADD_PRODUCT_TO_BASKET, chosenProduct);
-        }
-    }
-    const cardPreview = new CardPreview(events, toggleBasket);
     const buttonDisabled = chosenProduct.price === null;
     const buttonText = buttonDisabled ? "Недоступно" : inBasket ? "Удалить из корзины" : "В корзину";
     const cardRender = cardPreview.render({...chosenProduct, buttonDisabled: buttonDisabled, buttonText: buttonText});
@@ -124,16 +118,21 @@ events.on(EventNames.CLOSE_MODAL, () => {
 events.on(EventNames.OPEN_PRODUCT, (data: IProduct) => {
     catalogModel.saveChosenProduct(data);
 });
-events.on(EventNames.ADD_PRODUCT_TO_BASKET, (data: IProduct) => {
-    basketModel.addProduct(data);
-    renderModalClose();
-});
 events.on(EventNames.REMOVE_PRODUCT_FROM_BASKET, (data: IProduct) => {
     basketModel.removeProduct(data);
-    if (modalState === "chosenProduct") {
-        renderModalClose();
-    }
 });
+events.on(EventNames.PREVIEW_TOGGLE, () => {
+    const product = catalogModel.getChosenProduct();
+    if (product === null) {
+        return;
+    }
+    if (basketModel.isPresent(product.id)) {
+        basketModel.removeProduct(product);
+    } else {
+        basketModel.addProduct(product);
+    }
+    renderModalClose();
+})
 events.on(EventNames.BASKET_ORDER, () => {
     renderOrderModal();
 });
